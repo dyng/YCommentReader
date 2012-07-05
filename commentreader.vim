@@ -1,14 +1,14 @@
-if has("python")
 python << EOF
 import vim
 
 class segment():
     def __init__(self, fd, **option):
-        self.length = option['length']
-        self.width  = option['width']
-        self.lcom   = option['lcom']
-        self.filler = option['filler']
-        self.rcom   = option['rcom']
+        self.length   = option['length']
+        self.width    = option['width']
+        self.lcom     = option['lcom']
+        self.filler   = option['filler']
+        self.rcom     = option['rcom']
+        self.position = option['position']
 
         self.content = []
         line_loaded = 0
@@ -18,7 +18,6 @@ class segment():
             if not line: break
             # TODO
             # 这样的话把空行也全部删掉了
-            # 还有文本中存在引号的问题必须解决
             # 还有空格是半角的，但是却占一个字数
             line = line.rstrip('\r\n')
             p = 0
@@ -36,10 +35,11 @@ class segment():
 
 class page():
     def __init__(self, fd, **option):
-        self.length   = option['length']
-        self.width    = option['width']
-        self.defs     = option['defs']
-        self.segments = []
+        self.length        = option['length']
+        self.width         = option['width']
+        self.defs          = option['defs']
+        self.current_block = 0
+        self.segments      = []
 
         self.anchors = []
         (o_line, o_col) = (vim.eval("line('.')"), vim.eval("col('.')"))
@@ -50,15 +50,21 @@ class page():
             self.anchors.append(anchor)
         # TODO
         # 如果不存在锚点，再做错误处理
+
         # recover the cursor position
         vim.command("call cursor('{0}', '{1}')".format(o_line, o_col))
 
         for a in range(len(self.anchors)):
+            if a == 0:
+                option['position'] = self.anchors[a]
+            else:
+                option['position'] += self.anchors[a] - self.anchors[a-1] + len(self.segments[-1].content) + 2
             new_segment = segment(fd, **option)
             if not new_segment.content: break
+
             self.segments.append(new_segment)
 
-    def make(self):
+    def render(self):
         # segments may less than anchors
         for a in range(len(self.anchors)):
             if a >= len(self.segments): break
@@ -77,9 +83,13 @@ class page():
             for char in '|"':
                 command = command.replace(char, '\\'+char)
 
-            # TODO
-            # 如果原文本没有被更改国，那么不改变'modified'
+            # let 'modified' intact
+            o_modified = vim.eval('&modified')
             vim.command(command)
+            vim.command('let modified={0}'.format(o_modified))
+
+            self.current_block = 0
+            vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position))
 
     def clear(self):
         # segments may less than anchors
@@ -90,7 +100,25 @@ class page():
             crange = "{0},{1}".format(anchor, anchor+len(segment.content)+1)
 
             command = "silent! {0}delete _".format(crange)
+
+            # let 'modified' intact
+            o_modified = vim.eval('&modified')
             vim.command(command)
+            vim.command('let modified={0}'.format(o_modified))
+
+    def nextBlock(self):
+        if self.current_block < len(self.segments)-1:
+            self.current_block += 1
+        else:
+            self.current_block = self.current_block
+        vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position))
+
+    def preBlock(self):
+        if self.current_block > 0:
+            self.current_block -= 1
+        else:
+            self.current_block = self.current_block
+        vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position))
 
 class book():
     def __init__(self, path, **option):
@@ -150,7 +178,7 @@ class book():
     def render(self):
         if self.on_show: return
         page = self.pages[self.current_page]
-        page.make()
+        page.render()
         self.on_show = 1
 
     def clear(self):
@@ -168,7 +196,6 @@ langdict = {
             'cpp':     { 'lcom':  '//', 'filler':  '//', 'rcom':  '//', 'defs':  r''},
            }
 EOF
-endif
 
 if !exists('g:creader_chars_per_line')
     let g:creader_chars_per_line = 20
@@ -210,7 +237,26 @@ myBook.clear()
 EOF
 endfunction
 
-command! -nargs=1 -complete=file CRopen     call s:CRopen('<args>')
-command! -nargs=0                CRnextpage call s:CRnextpage()
-command! -nargs=0                CRprepage  call s:CRprepage()
-command! -nargs=0                CRclear    call s:CRclear()
+function! s:CRnextblock()
+python << EOF
+myBook.pages[myBook.current_page].nextBlock()
+EOF
+endfunction
+
+function! s:CRpreblock()
+python << EOF
+myBook.pages[myBook.current_page].preBlock()
+EOF
+endfunction
+
+command! -nargs=1 -complete=file CRopen      call s:CRopen('<args>')
+command! -nargs=0                CRnextpage  call s:CRnextpage()
+command! -nargs=0                CRprepage   call s:CRprepage()
+command! -nargs=0                CRclear     call s:CRclear()
+command! -nargs=0                CRnextblock call s:CRnextblock()
+command! -nargs=0                CRpreblock  call s:CRpreblock()
+
+nnoremap <silent> <leader>d :CRnextpage<CR>
+nnoremap <silent> <leader>a :CRprepage<CR>
+nnoremap <silent> <leader>w :CRpreblock<CR>
+nnoremap <silent> <leader>s :CRnextblock<CR>
