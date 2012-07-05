@@ -86,8 +86,9 @@ class page():
             # let 'modified' intact
             o_modified = vim.eval('&modified')
             vim.command(command)
-            vim.command('let modified={0}'.format(o_modified))
+            vim.command('let &modified={0}'.format(o_modified))
 
+            # set cursor to first block
             self.current_block = 0
             vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position))
 
@@ -104,7 +105,7 @@ class page():
             # let 'modified' intact
             o_modified = vim.eval('&modified')
             vim.command(command)
-            vim.command('let modified={0}'.format(o_modified))
+            vim.command('let &modified={0}'.format(o_modified))
 
     def nextBlock(self):
         if self.current_block < len(self.segments)-1:
