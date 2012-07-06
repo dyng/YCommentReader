@@ -1,4 +1,4 @@
-if exists('g:commentreader_loaded') || !has(python)
+if exists('g:commentreader_loaded') || !has('python')
     finish
 endif
 let g:command_t_loaded = 1
