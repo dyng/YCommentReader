@@ -1,3 +1,8 @@
+if exists('g:commentreader_loaded') || !has(python)
+    finish
+endif
+let g:command_t_loaded = 1
+
 python << EOF
 import vim
 
@@ -112,7 +117,8 @@ class page():
             self.current_block += 1
         else:
             self.current_block = self.current_block
-        vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position))
+        vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position +\
+                                                    len(self.segments[self.current_block].content) + 1))
 
     def preBlock(self):
         if self.current_block > 0:
