@@ -94,8 +94,8 @@ class page():
             vim.command('let &modified={0}'.format(o_modified))
 
             # set cursor to first block
-            self.current_block = 0
-            vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position))
+            self.current_block = -1
+            self.nextBlock()
 
     def clear(self):
         # segments may less than anchors
@@ -117,15 +117,18 @@ class page():
             self.current_block += 1
         else:
             self.current_block = self.current_block
-        vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position +\
-                                                    len(self.segments[self.current_block].content) + 1))
+        cb = self.segments[self.current_block]
+        midblock = cb.position + (len(cb.content) + 1)//2
+        vim.command("normal {0}z.".format(midblock))
 
     def preBlock(self):
         if self.current_block > 0:
             self.current_block -= 1
         else:
             self.current_block = self.current_block
-        vim.command("call cursor('{0}', '1')".format(self.segments[self.current_block].position))
+        cb = self.segments[self.current_block]
+        midblock = cb.position + (len(cb.content) + 1)//2
+        vim.command("normal {0}z.".format(midblock))
 
 class book():
     def __init__(self, path, **option):
