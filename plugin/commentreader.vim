@@ -22,9 +22,10 @@ class block():
             # if reached the eof
             if not line: break
             # TODO
-            # 这样的话把空行也全部删掉了
             # 还有空格是半角的，但是却占一个字数
             line = line.rstrip('\r\n')
+            # insert a whitespace make sure the blank line not be omitted
+            if len(line) == 0: line = " "
             p = 0
             while p < len(line):
                 self.content.append(line[p:p+self.width])
