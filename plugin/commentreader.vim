@@ -6,7 +6,7 @@ let g:commentreader_loaded = 1
 python << EOF
 import vim
 
-class segment():
+class block():
     def __init__(self, fd, **option):
         self.length   = option['length']
         self.width    = option['width']
@@ -44,7 +44,7 @@ class page():
         self.width         = option['width']
         self.defs          = option['defs']
         self.current_block = 0
-        self.segments      = []
+        self.blocks      = []
 
         self.anchors = []
         (o_line, o_col) = (vim.eval("line('.')"), vim.eval("col('.')"))
@@ -63,23 +63,23 @@ class page():
             if a == 0:
                 option['position'] = self.anchors[a]
             else:
-                option['position'] += self.anchors[a] - self.anchors[a-1] + len(self.segments[-1].content) + 2
-            new_segment = segment(fd, **option)
-            if not new_segment.content: break
+                option['position'] += self.anchors[a] - self.anchors[a-1] + len(self.blocks[-1].content) + 2
+            new_block = block(fd, **option)
+            if not new_block.content: break
 
-            self.segments.append(new_segment)
+            self.blocks.append(new_block)
 
     def render(self):
-        # segments may less than anchors
+        # blocks may less than anchors
         for a in range(len(self.anchors)):
-            if a >= len(self.segments): break
+            if a >= len(self.blocks): break
 
-            content = self.segments[-a-1].commentize()
+            content = self.blocks[-a-1].commentize()
             # escape '"' as a string
             for char in '"':
                 content = content.replace(char, '\\'+char)
 
-            # insert segments in descending order
+            # insert blocks in descending order
             # otherwise the line numbers will mess
             anchor = self.anchors[-a-1]
 
@@ -98,12 +98,12 @@ class page():
             self.nextBlock()
 
     def clear(self):
-        # segments may less than anchors
+        # blocks may less than anchors
         for a in range(len(self.anchors)):
-            if a >= len(self.segments): break
+            if a >= len(self.blocks): break
             anchor = self.anchors[a]
-            segment = self.segments[a]
-            crange = "{0},{1}".format(anchor, anchor+len(segment.content)+1)
+            block = self.blocks[a]
+            crange = "{0},{1}".format(anchor, anchor+len(block.content)+1)
 
             command = "silent! {0}delete _".format(crange)
 
@@ -113,22 +113,24 @@ class page():
             vim.command('let &modified={0}'.format(o_modified))
 
     def nextBlock(self):
-        if self.current_block < len(self.segments)-1:
+        if self.current_block < len(self.blocks)-1:
             self.current_block += 1
+            cb = self.blocks[self.current_block]
+            midblock = cb.position + (len(cb.content) + 1)//2
+            vim.command("normal {0}z.".format(midblock))
+            return True
         else:
-            self.current_block = self.current_block
-        cb = self.segments[self.current_block]
-        midblock = cb.position + (len(cb.content) + 1)//2
-        vim.command("normal {0}z.".format(midblock))
+            return False
 
     def preBlock(self):
         if self.current_block > 0:
             self.current_block -= 1
+            cb = self.blocks[self.current_block]
+            midblock = cb.position + (len(cb.content) + 1)//2
+            vim.command("normal {0}z.".format(midblock))
+            return True
         else:
-            self.current_block = self.current_block
-        cb = self.segments[self.current_block]
-        midblock = cb.position + (len(cb.content) + 1)//2
-        vim.command("normal {0}z.".format(midblock))
+            return False
 
 class book():
     def __init__(self, path, **option):
@@ -167,7 +169,7 @@ class book():
         new_page = page(self.fd, **option)
 
         # if reached the end
-        if not new_page.segments:
+        if not new_page.blocks:
             return self.pages[self.current_page]
 
         self.pages.append(new_page)
@@ -249,13 +251,23 @@ endfunction
 
 function! s:CRnextblock()
 python << EOF
-myBook.pages[myBook.current_page].nextBlock()
+if myBook.pages[myBook.current_page].nextBlock():
+    pass
+else:
+    myBook.clear()
+    myBook.nextPage()
+    myBook.render()
 EOF
 endfunction
 
 function! s:CRpreblock()
 python << EOF
-myBook.pages[myBook.current_page].preBlock()
+if myBook.pages[myBook.current_page].preBlock():
+    pass
+else:
+    myBook.clear()
+    myBook.prePage()
+    myBook.render()
 EOF
 endfunction
 
