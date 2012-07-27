@@ -12,7 +12,7 @@ Requirements
 Installation
 =============
 
-Just drop `commentreader.vim` in your `.vim/plugin` and enjoy.
+Just drop `commentreader.vim` in your `.vim/plugin` and enjoy!
 
 Usage and Configuration
 =============
@@ -26,6 +26,7 @@ Commands
 - *CRprepage*:   back to the previous page.
 - *CRnextblock*: jump to the next comment block.
 - *CRprepage*:   jump to the previous comment block.
+- *Crclear*:     Clear all 'novel' blocks.
 
 Maps
 -------------
