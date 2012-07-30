@@ -26,7 +26,7 @@ class block():
             # if reached the eof
             if not line: break
             # TODO
-            # 还有空格是半角的，但是却占一个字数
+            # whitespace is halfwidth but count as a whole character
             line = line.rstrip('\r\n')
             # insert a whitespace make sure the blank line not be omitted
             if len(line) == 0: line = " "
@@ -59,7 +59,7 @@ class page():
             if anchor == 0: break
             self.anchors.append(anchor)
         # TODO
-        # 如果不存在锚点，再做错误处理
+        # if there is no anchor, need extra solution
 
         # recover the cursor position
         vim.command("call cursor('{0}', '{1}')".format(o_line, o_col))
@@ -155,7 +155,7 @@ class book():
         else:
             self.lcom = vim.eval(r"substitute(&commentstring, '\([^ \t]*\)\s*%s.*', '\1', '')")
             # TODO
-            # 研究一下填充物应该怎么确定
+            # determine how to define filler
             self.filler = vim.eval(r"substitute(&commentstring, '\([^ \t]*\)\s*%s.*', '\1', '')")
             self.rcom = vim.eval(r"substitute(&commentstring, '.*%s\s*\(.*\)', '\1', 'g')")
 
@@ -182,8 +182,6 @@ class book():
         return self.pages[self.current_page]
 
     def prePage(self):
-        # TODO 
-        # 对于当前页还是-1时调用prePage还需要额外处理错误
         if self.current_page == -1:
             return
         elif self.current_page == 0:
@@ -204,7 +202,8 @@ class book():
         page.clear()
         self.on_show = 0
 
-def CRopen():
+def CRopen(path):
+    global myBook
     path = vim.eval('a:path')
     option = {
             'length' : int(vim.eval('g:creader_lines_per_block')),
