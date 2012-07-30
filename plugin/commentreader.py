@@ -37,10 +37,10 @@ class block():
                 p += self.width
 
     def commentize(self):
-        output = self.lcom + self.filler * self.width + "\\n"
+        output = self.lcom + self.filler * self.width * 2 + "\\n"
         for line in self.content:
             output += "{0} {1}\\n".format(self.filler, line.encode('utf-8'))
-        output += self.filler * self.width + self.rcom + "\\n"
+        output += self.filler * self.width * 2 + self.rcom + "\\n"
         return output
 
 class page():
