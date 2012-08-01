@@ -12,7 +12,9 @@ Requirements
 Installation
 =============
 
-Just drop `commentreader.vim` in your `.vim/plugin` and enjoy!
+Just drop all files in `plugin/` to `$HOME/.vim/plugin/` directory and enjoy!
+
+Although I recommend using [vundle](https://github.com/gmarik/vundle/) or [pathogen](https://github.com/tpope/vim-pathogen/) to manage your vim plugins.
 
 Usage and Configuration
 =============
