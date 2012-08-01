@@ -203,13 +203,17 @@ class book():
         self.on_show = 0
 
 def CRopen(path):
-    global myBook
     path = vim.eval('a:path')
     option = {
             'length' : int(vim.eval('g:creader_lines_per_block')),
             'width'  : int(vim.eval('g:creader_chars_per_line')),
             }
+
+    global myBook
+    # clear previous book
+    if myBook != 0: CRclear()
     myBook = book(path, **option)
+    CRnextpage()
 
 def CRnextpage():
     myBook.clear()
