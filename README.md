@@ -1,7 +1,7 @@
 CommentReader
 =============
 
-Read your favorite novel in Vim as comment ( Don't let your boss know! )
+Read your favorite novel in Vim as comment ( Don't let your boss know :P )
 
 Requirements
 ============
